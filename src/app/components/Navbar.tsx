@@ -1,10 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        const { createClient } = await import("@/utils/supabase/client");
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        setIsLoggedIn(!!user);
+      } catch {
+        setIsLoggedIn(false);
+      }
+    }
+    checkAuth();
+  }, []);
 
   return (
     <nav className="sticky top-0 z-50 border-b border-mist/60 bg-white/80 backdrop-blur-xl">
@@ -33,12 +48,25 @@ export default function Navbar() {
             Pricing
           </Link>
           <div className="mx-2 h-5 w-px bg-mist" />
-          <Link href="/login" className="btn-ghost rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:text-primary">
-            Log in
-          </Link>
-          <Link href="/signup" className="btn btn-primary ml-1 text-sm">
-            Get Started
-          </Link>
+          {isLoggedIn ? (
+            <>
+              <Link href="/dashboard" className="btn-ghost rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:text-primary">
+                Dashboard
+              </Link>
+              <Link href="/dashboard" className="btn btn-primary ml-1 text-sm">
+                My Account
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href="/login" className="btn-ghost rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:text-primary">
+                Log in
+              </Link>
+              <Link href="/signup" className="btn btn-primary ml-1 text-sm">
+                Get Started
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -72,12 +100,20 @@ export default function Navbar() {
             Pricing
           </Link>
           <hr className="divider my-2" />
-          <Link href="/login" className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-cloud" onClick={() => setMobileOpen(false)}>
-            Log in
-          </Link>
-          <Link href="/signup" className="btn btn-primary mt-2 w-full text-sm" onClick={() => setMobileOpen(false)}>
-            Get Started
-          </Link>
+          {isLoggedIn ? (
+            <Link href="/dashboard" className="btn btn-primary mt-2 w-full text-sm" onClick={() => setMobileOpen(false)}>
+              Dashboard
+            </Link>
+          ) : (
+            <>
+              <Link href="/login" className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-cloud" onClick={() => setMobileOpen(false)}>
+                Log in
+              </Link>
+              <Link href="/signup" className="btn btn-primary mt-2 w-full text-sm" onClick={() => setMobileOpen(false)}>
+                Get Started
+              </Link>
+            </>
+          )}
         </div>
       )}
     </nav>
