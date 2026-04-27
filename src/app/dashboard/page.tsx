@@ -4,6 +4,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { formatCurrencyFromCents } from "@/lib/format";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 type Score = { id: string; score_date: string; stableford_score: number };
 type Charity = { id: string; name: string };
@@ -18,7 +19,10 @@ type Summary = {
 function fmt(d: string) { return new Date(`${d}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }); }
 
 export default function DashboardPage() {
-  const [userId, setUserId] = useState(() => typeof window === "undefined" ? "" : window.localStorage.getItem("benevo.userId") ?? "");
+  const router = useRouter();
+  const [userId, setUserId] = useState("");
+  const [userName, setUserName] = useState("");
+  const [authLoading, setAuthLoading] = useState(true);
   const [scoreDate, setScoreDate] = useState("");
   const [stablefordScore, setStablefordScore] = useState("");
   const [scores, setScores] = useState<Score[]>([]);
@@ -37,6 +41,37 @@ export default function DashboardPage() {
   function toast(msg: string, type: "success" | "error" | "info" = "info") {
     setMessage(msg); setMsgType(type);
     setTimeout(() => setMessage(""), 3000);
+  }
+
+  // Auto-detect logged-in user from Supabase Auth session
+  useEffect(() => {
+    async function getSession() {
+      try {
+        const { createClient } = await import("@/utils/supabase/client");
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          setUserId(user.id);
+          setUserName(user.user_metadata?.full_name || user.email || "");
+        } else {
+          // Not logged in — redirect to login
+          router.push("/login");
+          return;
+        }
+      } catch {
+        router.push("/login");
+        return;
+      }
+      setAuthLoading(false);
+    }
+    getSession();
+  }, []);
+
+  async function handleLogout() {
+    const { createClient } = await import("@/utils/supabase/client");
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/");
   }
 
   async function api(url: string, opts?: RequestInit) {
@@ -60,10 +95,10 @@ export default function DashboardPage() {
       setCharityPercent(String(sm.charity?.percent ?? 10));
       setWinners(wn.winners ?? []);
       setCharities(ch.charities ?? []);
-    } catch { toast("Failed to load data", "error"); }
+    } catch { /* silently handle first-load errors */ }
   }
 
-  useEffect(() => { if (userId) loadAll(userId); }, [userId]);
+  useEffect(() => { if (userId && !authLoading) loadAll(userId); }, [userId, authLoading]);
 
   const canSubmit = useMemo(() => userId.trim().length > 0 && scoreDate.length > 0 && Number(stablefordScore) >= 1, [userId, scoreDate, stablefordScore]);
 
@@ -71,7 +106,6 @@ export default function DashboardPage() {
     e.preventDefault();
     if (!canSubmit) return;
     setLoading(true);
-    window.localStorage.setItem("benevo.userId", userId);
     try {
       await api("/api/scores", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId, scoreDate, stablefordScore: Number(stablefordScore) }) });
       toast("Score saved ✓", "success");
@@ -113,11 +147,22 @@ export default function DashboardPage() {
   }
 
   async function startCheckout(plan: "monthly" | "yearly") {
-    if (!userId || !selectedCharityId) { toast("Enter user id and select charity first", "error"); return; }
+    if (!userId || !selectedCharityId) { toast("Please select a charity first", "error"); return; }
     try {
       const d = await api("/api/billing/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId, plan, charityId: selectedCharityId, charityPercent: Number(charityPercent) }) });
       if (d.checkoutUrl) window.location.href = d.checkoutUrl;
     } catch (err) { toast((err as Error).message, "error"); }
+  }
+
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center gradient-hero-subtle">
+        <div className="text-center">
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <p className="mt-3 text-sm text-slate">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
   }
 
   const subStatus = summary?.subscription?.status ?? "inactive";
@@ -136,6 +181,7 @@ export default function DashboardPage() {
           <div className="flex items-center gap-3">
             <span className={`badge ${subStatus === "active" ? "status-active" : "status-inactive"}`}>{subStatus}</span>
             <Link href="/admin" className="btn btn-ghost text-xs">Admin</Link>
+            <button className="btn btn-ghost text-xs text-danger" onClick={handleLogout}>Log out</button>
           </div>
         </div>
       </nav>
@@ -151,13 +197,10 @@ export default function DashboardPage() {
         {/* Header */}
         <header className="surface-card p-6 md:p-8 mb-6 fade-up">
           <p className="mb-1 text-xs font-bold uppercase tracking-widest text-impact">Subscriber Dashboard</p>
-          <h1 className="hero-title text-2xl font-bold md:text-4xl">Track scores. Fund change. Win prizes.</h1>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <label className="input-label mb-0 mr-1">User ID</label>
-            <input className="input-field max-w-xs text-xs" placeholder="Supabase user uuid" value={userId}
-              onChange={(e) => { setUserId(e.target.value); window.localStorage.setItem("benevo.userId", e.target.value); }} />
-            <button className="btn btn-ghost text-xs" onClick={() => loadAll(userId)}>Refresh</button>
-          </div>
+          <h1 className="hero-title text-2xl font-bold md:text-4xl">
+            Welcome back{userName ? `, ${userName}` : ""}
+          </h1>
+          <p className="mt-1 text-sm text-slate">Track your scores, manage your charity, and view your winnings.</p>
         </header>
 
         {/* Stats Row */}
@@ -192,8 +235,8 @@ export default function DashboardPage() {
             <div className="surface-card p-6">
               <h2 className="section-title text-lg font-bold">Add Score</h2>
               <form className="mt-4 space-y-4" onSubmit={handleScoreCreate}>
-                <div><label className="input-label">Score Date</label><input type="date" className="input-field" value={scoreDate} onChange={(e) => setScoreDate(e.target.value)} /></div>
-                <div><label className="input-label">Stableford Score (1–45)</label><input type="number" min={1} max={45} className="input-field" value={stablefordScore} onChange={(e) => setStablefordScore(e.target.value)} /></div>
+                <div><label className="input-label">Score Date</label><input type="date" className="input-field" value={scoreDate} onChange={(e) => setScoreDate(e.target.value)} required /></div>
+                <div><label className="input-label">Stableford Score (1–45)</label><input type="number" min={1} max={45} className="input-field" value={stablefordScore} onChange={(e) => setStablefordScore(e.target.value)} required /></div>
                 <button type="submit" disabled={!canSubmit || loading} className="btn btn-primary w-full">{loading ? "Saving..." : "Save Score"}</button>
               </form>
             </div>
@@ -257,8 +300,8 @@ export default function DashboardPage() {
                   <p className="text-sm font-semibold">{summary?.subscription?.current_period_end ?? "N/A"}</p>
                 </div>
                 <div className="flex gap-2">
-                  <button className="btn btn-secondary flex-1 text-xs" onClick={() => startCheckout("monthly").catch(() => toast("Failed", "error"))}>Monthly</button>
-                  <button className="btn btn-primary flex-1 text-xs" onClick={() => startCheckout("yearly").catch(() => toast("Failed", "error"))}>Yearly</button>
+                  <button className="btn btn-secondary flex-1 text-xs" onClick={() => startCheckout("monthly").catch(() => toast("Failed", "error"))}>Subscribe Monthly</button>
+                  <button className="btn btn-primary flex-1 text-xs" onClick={() => startCheckout("yearly").catch(() => toast("Failed", "error"))}>Subscribe Yearly</button>
                 </div>
               </div>
             </div>
@@ -274,7 +317,7 @@ export default function DashboardPage() {
                 <p className="text-xs text-slate">Pending: {summary?.winnings?.pendingCount ?? 0}</p>
               </div>
               {winners.length === 0 ? (
-                <p className="text-sm text-slate">No winnings yet. Keep entering scores!</p>
+                <p className="text-sm text-slate">No winnings yet. Keep entering scores and participating in draws!</p>
               ) : (
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {winners.map((w) => (
@@ -294,7 +337,7 @@ export default function DashboardPage() {
               <h3 className="text-sm font-bold mb-3">Upload Winner Proof</h3>
               <div className="grid gap-3 md:grid-cols-3">
                 <input className="input-field" placeholder="Winner ID" value={proofWinnerId} onChange={(e) => setProofWinnerId(e.target.value)} />
-                <input className="input-field md:col-span-2" placeholder="Proof URL" value={proofUrl} onChange={(e) => setProofUrl(e.target.value)} />
+                <input className="input-field md:col-span-2" placeholder="Proof screenshot URL" value={proofUrl} onChange={(e) => setProofUrl(e.target.value)} />
               </div>
               <button className="btn btn-primary mt-3" onClick={() => submitProof().catch(() => toast("Failed", "error"))}>Submit Proof</button>
             </div>
