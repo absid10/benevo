@@ -1,84 +1,151 @@
-# Benevo
+# Benevo — Where Performance Meets Purpose
 
-Benevo is a full-stack platform that combines:
+A subscription-driven web platform combining golf performance tracking, charity fundraising, and monthly draw-based rewards.
 
-- Stableford score tracking (last 5 only)
-- Monthly draw engine (random or weighted)
-- Charity contribution logic
-- User and admin web experiences
+## 🏗️ Tech Stack
 
-Stack:
+- **Frontend**: Next.js 16 (App Router), React 19, TypeScript
+- **Styling**: Tailwind CSS 4
+- **Backend**: Next.js API Routes (serverless)
+- **Database**: Supabase (PostgreSQL) with Row Level Security
+- **Payments**: Stripe (Checkout, Webhooks, Billing Portal)
+- **Deployment**: Vercel
 
-- Next.js (App Router, TypeScript)
-- Supabase (Postgres + auth-ready schema)
-- Vercel deployment target
+## 📁 Project Structure
 
-## Implemented Modules
+```
+src/
+├── app/
+│   ├── page.tsx             # Landing page (public)
+│   ├── login/page.tsx       # Login page
+│   ├── signup/page.tsx      # Signup page
+│   ├── dashboard/page.tsx   # Subscriber dashboard
+│   ├── admin/page.tsx       # Admin control panel
+│   ├── charities/page.tsx   # Charity directory
+│   ├── components/          # Shared components (Navbar, Footer)
+│   └── api/                 # API routes
+│       ├── auth/            # Demo login
+│       ├── scores/          # Score CRUD (rolling 5)
+│       ├── draw/            # Simulate + publish draws
+│       ├── charities/       # Charity CRUD
+│       ├── charity-preference/ # User charity selection
+│       ├── subscriptions/   # Subscription management
+│       ├── billing/         # Stripe checkout/portal/webhook
+│       ├── winners/         # Winner verification
+│       ├── dashboard/       # Dashboard summary
+│       └── admin/           # Admin reports
+├── lib/                     # Business logic
+│   ├── draw.ts              # Draw engine (random + weighted)
+│   ├── schemas.ts           # Zod validation schemas
+│   ├── stripe.ts            # Stripe client
+│   ├── supabase.ts          # Admin Supabase client
+│   ├── env.ts               # Environment validation
+│   └── format.ts            # Currency formatting
+├── utils/supabase/          # Supabase SSR clients
+│   ├── client.ts            # Browser client
+│   ├── server.ts            # Server client
+│   └── middleware.ts        # Middleware client
+├── middleware.ts             # Auth session refresh
+supabase/
+└── migrations/
+    └── 001_initial_schema.sql  # Full database schema
+```
 
-- Landing page with charity-first product narrative
-- User dashboard for score operations
-- Admin dashboard for draw simulation/publishing and charity creation
-- API routes:
-	- `GET/POST/PUT/DELETE /api/scores`
-	- `POST /api/draw/simulate`
-	- `POST /api/draw/publish`
-	- `GET/POST /api/charities`
-	- `POST /api/charity-preference`
-	- `GET /api/dashboard/summary`
-	- `GET/POST/PUT /api/winners`
-	- `GET /api/admin/reports`
-	- `POST /api/subscriptions`
-	- `POST /api/billing/checkout`
-	- `POST /api/billing/portal`
-	- `POST /api/billing/webhook`
-- Supabase schema and RLS baseline in `supabase/migrations/001_initial_schema.sql`
-- PRD traceability checklist in `docs/PRD_COMPLIANCE_CHECKLIST.md`
+## 🚀 Getting Started
 
-## Local Setup
-
-1. Install dependencies:
+### 1. Clone & Install
 
 ```bash
+git clone https://github.com/absid10/Benevo-Where-performance-meets-purpose.git
+cd benevo-app
 npm install
 ```
 
-2. Copy environment file:
+### 2. Supabase Setup
 
-```bash
-cp .env.example .env.local
+1. Go to [supabase.com](https://supabase.com) and create a new project
+2. Navigate to **SQL Editor** in the Supabase dashboard
+3. Copy the contents of `supabase/migrations/001_initial_schema.sql`
+4. Paste into the SQL editor and click **Run**
+5. Get your project keys from **Settings → API**
+
+### 3. Environment Variables
+
+Create `.env.local`:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+ADMIN_API_SECRET=your-admin-secret
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# Stripe (optional for local dev)
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_MONTHLY_PRICE_ID=price_...
+STRIPE_YEARLY_PRICE_ID=price_...
 ```
 
-3. Fill `.env.local` values:
-
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `ADMIN_API_SECRET`
-- `NEXT_PUBLIC_APP_URL`
-- `STRIPE_SECRET_KEY`
-- `STRIPE_WEBHOOK_SECRET`
-- `STRIPE_MONTHLY_PRICE_ID`
-- `STRIPE_YEARLY_PRICE_ID`
-
-4. Apply SQL migration in Supabase SQL editor:
-
-- Run `supabase/migrations/001_initial_schema.sql`
-
-5. Run the app:
+### 4. Run Development Server
 
 ```bash
 npm run dev
 ```
 
-## Vercel Deployment
+Open [http://localhost:3000](http://localhost:3000)
 
-1. Create a new Vercel project from this repository.
-2. Set all environment variables from `.env.example` in Vercel project settings.
-3. Deploy.
+### 5. Create Test Admin User
 
-## Notes
+Use the API to create an admin profile:
 
-- Draw publish endpoint handles monthly uniqueness and jackpot rollover behavior.
-- Score endpoint enforces one score per date and rolling top-5 retention.
-- Winner proof, admin verification, and payout status transitions are implemented.
-- Configure project-specific Vercel and Supabase environments before deploying to production.
+```bash
+curl -X POST http://localhost:3000/api/auth/demo-login \
+  -H "Content-Type: application/json" \
+  -d '{"userId": "YOUR_SUPABASE_USER_ID", "role": "admin", "fullName": "Admin User"}'
+```
+
+## 🔑 Pages & Credentials
+
+| Page | URL | Access |
+|------|-----|--------|
+| Homepage | `/` | Public |
+| Login | `/login` | Public |
+| Signup | `/signup` | Public |
+| Charities | `/charities` | Public |
+| Dashboard | `/dashboard` | Subscriber |
+| Admin | `/admin` | Admin |
+
+## 📊 Database Schema
+
+- `profiles` — User identity and role (subscriber/admin)
+- `charities` — Charity directory with featured flag
+- `subscriptions` — Payment lifecycle (Stripe-synced)
+- `user_charity_preferences` — Charity selection per user
+- `scores` — Golf scores (rolling 5, Stableford 1-45)
+- `draws` — Monthly draw configuration
+- `draw_entries` — User entries per draw
+- `prize_pools` — Pool calculations per draw
+- `winners` — Winner records and verification
+- `donations` — Independent donations
+- `notifications` — System notifications
+
+## 🎲 Draw System
+
+- Users' 5 latest scores become their draw entry numbers
+- **Random mode**: Lottery-style number generation (1-45)
+- **Weighted mode**: Numbers biased by most frequent user scores
+- **Prize tiers**: 5-match (40%), 4-match (35%), 3-match (25%)
+- **Jackpot rollover**: 5-match pool carries forward if unclaimed
+
+## 🌐 Deployment (Vercel)
+
+1. Push to GitHub
+2. Import project in [vercel.com](https://vercel.com)
+3. Set root directory to `benevo-app`
+4. Add all environment variables
+5. Deploy!
+
+## 📄 License
+
+Built for the Digital Heroes selection process.

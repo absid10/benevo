@@ -15,7 +15,13 @@ const spaceGrotesk = Space_Grotesk({
 export const metadata: Metadata = {
   title: "Benevo | Where Performance Meets Purpose",
   description:
-    "Subscription platform combining score tracking, monthly draws, and charity impact.",
+    "Track your golf scores, participate in monthly prize draws, and support charities you love. Benevo combines sport performance with social impact.",
+  keywords: ["golf", "charity", "subscription", "prize draw", "stableford", "social impact"],
+  openGraph: {
+    title: "Benevo — Where Performance Meets Purpose",
+    description: "Track scores. Win prizes. Fund change.",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
