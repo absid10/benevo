@@ -1,6 +1,6 @@
 # Benevo
 
-Benevo is a full-stack assignment project for a modern subscription platform that combines:
+Benevo is a full-stack platform that combines:
 
 - Stableford score tracking (last 5 only)
 - Monthly draw engine (random or weighted)
@@ -81,4 +81,4 @@ npm run dev
 - Draw publish endpoint handles monthly uniqueness and jackpot rollover behavior.
 - Score endpoint enforces one score per date and rolling top-5 retention.
 - Winner proof, admin verification, and payout status transitions are implemented.
-- Use a fresh Vercel project and fresh Supabase project to satisfy assignment constraints.
+- Configure project-specific Vercel and Supabase environments before deploying to production.
