@@ -1,36 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Benevo
 
-## Getting Started
+Benevo is a full-stack assignment project for a modern subscription platform that combines:
 
-First, run the development server:
+- Stableford score tracking (last 5 only)
+- Monthly draw engine (random or weighted)
+- Charity contribution logic
+- User and admin web experiences
+
+Stack:
+
+- Next.js (App Router, TypeScript)
+- Supabase (Postgres + auth-ready schema)
+- Vercel deployment target
+
+## Implemented Modules
+
+- Landing page with charity-first product narrative
+- User dashboard for score operations
+- Admin dashboard for draw simulation/publishing and charity creation
+- API routes:
+	- `GET/POST/PUT/DELETE /api/scores`
+	- `POST /api/draw/simulate`
+	- `POST /api/draw/publish`
+	- `GET/POST /api/charities`
+	- `POST /api/charity-preference`
+	- `GET /api/dashboard/summary`
+	- `GET/POST/PUT /api/winners`
+	- `GET /api/admin/reports`
+	- `POST /api/subscriptions`
+	- `POST /api/billing/checkout`
+	- `POST /api/billing/portal`
+	- `POST /api/billing/webhook`
+- Supabase schema and RLS baseline in `supabase/migrations/001_initial_schema.sql`
+- PRD traceability checklist in `docs/PRD_COMPLIANCE_CHECKLIST.md`
+
+## Local Setup
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Copy environment file:
+
+```bash
+cp .env.example .env.local
+```
+
+3. Fill `.env.local` values:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `ADMIN_API_SECRET`
+- `NEXT_PUBLIC_APP_URL`
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `STRIPE_MONTHLY_PRICE_ID`
+- `STRIPE_YEARLY_PRICE_ID`
+
+4. Apply SQL migration in Supabase SQL editor:
+
+- Run `supabase/migrations/001_initial_schema.sql`
+
+5. Run the app:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Vercel Deployment
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Create a new Vercel project from this repository.
+2. Set all environment variables from `.env.example` in Vercel project settings.
+3. Deploy.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Notes
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Draw publish endpoint handles monthly uniqueness and jackpot rollover behavior.
+- Score endpoint enforces one score per date and rolling top-5 retention.
+- Winner proof, admin verification, and payout status transitions are implemented.
+- Use a fresh Vercel project and fresh Supabase project to satisfy assignment constraints.
