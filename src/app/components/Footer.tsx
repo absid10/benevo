@@ -28,6 +28,7 @@ export default function Footer() {
               <li><Link href="/#pricing" className="text-sm text-slate hover:text-primary transition-colors">Pricing</Link></li>
               <li><Link href="/charities" className="text-sm text-slate hover:text-primary transition-colors">Charities</Link></li>
               <li><Link href="/dashboard" className="text-sm text-slate hover:text-primary transition-colors">Dashboard</Link></li>
+              <li><Link href="/about" className="text-sm text-slate hover:text-primary transition-colors">About</Link></li>
               <li><Link href="/signup" className="text-sm text-slate hover:text-primary transition-colors">Get Started</Link></li>
             </ul>
           </div>
@@ -38,8 +39,8 @@ export default function Footer() {
             <ul className="space-y-2">
               <li><Link href="/#how-it-works" className="text-sm text-slate hover:text-primary transition-colors">FAQ</Link></li>
               <li><Link href="/#pricing" className="text-sm text-slate hover:text-primary transition-colors">Pricing</Link></li>
-              <li><span className="text-sm text-slate">Privacy Policy</span></li>
-              <li><span className="text-sm text-slate">Terms of Service</span></li>
+              <li><Link href="/privacy" className="text-sm text-slate hover:text-primary transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="text-sm text-slate hover:text-primary transition-colors">Terms of Service</Link></li>
             </ul>
           </div>
 

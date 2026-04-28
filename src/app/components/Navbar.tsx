@@ -52,6 +52,9 @@ export default function Navbar() {
           <Link href="/#pricing" className="btn-ghost rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:text-primary">
             Pricing
           </Link>
+          <Link href="/about" className="btn-ghost rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:text-primary">
+            About
+          </Link>
           <div className="mx-2 h-5 w-px bg-mist" />
           {isLoggedIn ? (
             <>
@@ -103,6 +106,9 @@ export default function Navbar() {
           </Link>
           <Link href="/#pricing" className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-cloud" onClick={() => setMobileOpen(false)}>
             Pricing
+          </Link>
+          <Link href="/about" className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-cloud" onClick={() => setMobileOpen(false)}>
+            About
           </Link>
           <hr className="divider my-2" />
           {isLoggedIn ? (
