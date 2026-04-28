@@ -10,54 +10,66 @@ type Winner = { id: string; user_id: string; tier: string; payout_cents: number;
 export default function AdminPage() {
   const router = useRouter();
   const [adminUserId, setAdminUserId] = useState("");
+  const [adminName, setAdminName] = useState("");
   const [authLoading, setAuthLoading] = useState(true);
-  const [drawMonth, setDrawMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM format
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [drawMonth, setDrawMonth] = useState(new Date().toISOString().slice(0, 7));
   const [mode, setMode] = useState<"random" | "weighted">("random");
-  const [adminSecret, setAdminSecret] = useState("");
-  const [secretVerified, setSecretVerified] = useState(false);
   const [charityName, setCharityName] = useState("");
   const [charitySlug, setCharitySlug] = useState("");
   const [charityDesc, setCharityDesc] = useState("");
   const [charityFeatured, setCharityFeatured] = useState(false);
   const [winners, setWinners] = useState<Winner[]>([]);
-  const [winnerStatus, setWinnerStatus] = useState<"approved" | "paid" | "rejected">("approved");
   const [report, setReport] = useState<Record<string, unknown> | null>(null);
   const [activeTab, setActiveTab] = useState<"draws" | "charities" | "winners" | "reports">("draws");
   const [toast, setToast] = useState("");
   const [toastType, setToastType] = useState<"success" | "error">("success");
   const [loading, setLoading] = useState(false);
   const [simResult, setSimResult] = useState<Record<string, unknown> | null>(null);
+  const ADMIN_SECRET = process.env.NEXT_PUBLIC_ADMIN_SECRET ?? "benevo-admin-2026-secret";
 
   function notify(msg: string, type: "success" | "error" = "success") {
     setToast(msg); setToastType(type);
     setTimeout(() => setToast(""), 3500);
   }
 
-  // Auto-detect admin user from Supabase Auth
+  // Check auth + admin role
   useEffect(() => {
-    async function getSession() {
+    async function checkAdminAccess() {
       try {
         const { createClient } = await import("@/utils/supabase/client");
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          setAdminUserId(user.id);
-        }
-      } catch { /* continue without user */ }
-      setAuthLoading(false);
-    }
-    getSession();
-  }, []);
 
-  function verifySecret(e: FormEvent) {
-    e.preventDefault();
-    if (adminSecret.trim().length > 0) {
-      setSecretVerified(true);
-      notify("Access granted", "success");
-    } else {
-      notify("Please enter the admin secret", "error");
+        if (!user) {
+          router.replace("/login?next=/admin");
+          return;
+        }
+
+        setAdminUserId(user.id);
+
+        // Check role from profiles table
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role, full_name")
+          .eq("id", user.id)
+          .single();
+
+        if (profile?.role === "admin") {
+          setIsAdmin(true);
+          setAdminName(profile.full_name ?? user.email ?? "Admin");
+        } else {
+          // Not admin — redirect to dashboard
+          router.replace("/dashboard?error=unauthorized");
+        }
+      } catch {
+        router.replace("/login");
+      } finally {
+        setAuthLoading(false);
+      }
     }
-  }
+    checkAdminAccess();
+  }, [router]);
 
   async function simulateDraw(e: FormEvent) {
     e.preventDefault();
@@ -69,12 +81,8 @@ export default function AdminPage() {
         body: JSON.stringify({ drawMonth: `${drawMonth}-01`, mode, actorUserId: adminUserId }),
       });
       const d = await r.json();
-      if (r.ok) {
-        setSimResult(d);
-        notify("Simulation complete — review results below", "success");
-      } else {
-        notify(d.error?.formErrors?.[0] || d.error || "Simulation failed", "error");
-      }
+      if (r.ok) { setSimResult(d); notify("Simulation complete — review results below", "success"); }
+      else notify(d.error?.formErrors?.[0] || d.error || "Simulation failed", "error");
     } catch { notify("Network error", "error"); }
     setLoading(false);
   }
@@ -88,12 +96,8 @@ export default function AdminPage() {
         body: JSON.stringify({ drawMonth: `${drawMonth}-01`, mode, actorUserId: adminUserId }),
       });
       const d = await r.json();
-      if (r.ok) {
-        notify("Draw published successfully! Winners have been notified.", "success");
-        setSimResult(null);
-      } else {
-        notify(d.error || "Publish failed", "error");
-      }
+      if (r.ok) { notify("Draw published successfully! Winners have been notified.", "success"); setSimResult(null); }
+      else notify(d.error || "Publish failed", "error");
     } catch { notify("Network error", "error"); }
     setLoading(false);
   }
@@ -104,16 +108,14 @@ export default function AdminPage() {
     try {
       const r = await fetch("/api/charities", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-admin-secret": adminSecret },
+        headers: { "Content-Type": "application/json", "x-admin-secret": ADMIN_SECRET },
         body: JSON.stringify({ name: charityName, slug: charitySlug, description: charityDesc, featured: charityFeatured }),
       });
       const d = await r.json();
       if (r.ok) {
         setCharityName(""); setCharitySlug(""); setCharityDesc(""); setCharityFeatured(false);
         notify(`"${d.charity?.name || charityName}" created successfully`, "success");
-      } else {
-        notify(d.error || "Failed to create charity", "error");
-      }
+      } else notify(d.error || "Failed to create charity", "error");
     } catch { notify("Network error", "error"); }
     setLoading(false);
   }
@@ -121,14 +123,10 @@ export default function AdminPage() {
   async function fetchWinners() {
     setLoading(true);
     try {
-      const r = await fetch("/api/winners?admin=true", { headers: { "x-admin-secret": adminSecret } });
+      const r = await fetch("/api/winners?admin=true", { headers: { "x-admin-secret": ADMIN_SECRET } });
       const d = await r.json();
-      if (r.ok) {
-        setWinners(d.winners ?? []);
-        notify(`Loaded ${d.winners?.length ?? 0} winner records`, "success");
-      } else {
-        notify(d.error || "Failed to load winners", "error");
-      }
+      if (r.ok) { setWinners(d.winners ?? []); notify(`Loaded ${d.winners?.length ?? 0} winner records`, "success"); }
+      else notify(d.error || "Failed to load winners", "error");
     } catch { notify("Network error", "error"); }
     setLoading(false);
   }
@@ -137,32 +135,30 @@ export default function AdminPage() {
     try {
       const r = await fetch("/api/winners", {
         method: "PUT",
-        headers: { "Content-Type": "application/json", "x-admin-secret": adminSecret },
+        headers: { "Content-Type": "application/json", "x-admin-secret": ADMIN_SECRET },
         body: JSON.stringify({ winnerId: wId, status: newStatus, reviewedBy: adminUserId }),
       });
-      if (r.ok) {
-        await fetchWinners();
-        notify(`Winner status updated to ${newStatus}`, "success");
-      } else {
-        const d = await r.json();
-        notify(d.error || "Update failed", "error");
-      }
+      if (r.ok) { await fetchWinners(); notify(`Winner status updated to ${newStatus}`, "success"); }
+      else { const d = await r.json(); notify(d.error || "Update failed", "error"); }
     } catch { notify("Network error", "error"); }
   }
 
   async function fetchReports() {
     setLoading(true);
     try {
-      const r = await fetch("/api/admin/reports", { headers: { "x-admin-secret": adminSecret } });
+      const r = await fetch("/api/admin/reports", { headers: { "x-admin-secret": ADMIN_SECRET } });
       const d = await r.json();
-      if (r.ok) {
-        setReport(d.totals);
-        notify("Reports loaded", "success");
-      } else {
-        notify(d.error || "Failed to load reports", "error");
-      }
+      if (r.ok) { setReport(d.totals); notify("Reports loaded", "success"); }
+      else notify(d.error || "Failed to load reports", "error");
     } catch { notify("Network error", "error"); }
     setLoading(false);
+  }
+
+  async function handleLogout() {
+    const { createClient } = await import("@/utils/supabase/client");
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/");
   }
 
   const tabs = [
@@ -172,70 +168,20 @@ export default function AdminPage() {
     { key: "reports", label: "Reports", icon: "📊" },
   ] as const;
 
-  // Show secret gate first
-  if (!secretVerified) {
-    return (
-      <div className="flex min-h-screen items-center justify-center gradient-hero-subtle px-4">
-        <div className="pointer-events-none fixed inset-0">
-          <div className="absolute -left-32 top-1/4 h-[500px] w-[500px] rounded-full bg-primary/5 blur-3xl" />
-          <div className="absolute -right-32 top-1/3 h-[400px] w-[400px] rounded-full bg-amber/5 blur-3xl" />
-        </div>
-
-        <div className="relative w-full max-w-md">
-          <Link href="/" className="mb-8 flex items-center justify-center gap-2.5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-[#8b5cf6] shadow-md">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" /></svg>
-            </div>
-            <span className="text-xl font-bold tracking-tight">Benevo</span>
-            <span className="badge bg-amber-soft text-amber ml-1">Admin</span>
-          </Link>
-
-          <div className="surface-card p-8 fade-up">
-            <div className="text-center">
-              <h1 className="section-title text-2xl font-bold">Admin Access</h1>
-              <p className="mt-2 text-sm text-slate">Enter your admin credentials to continue</p>
-            </div>
-
-            <form className="mt-6 space-y-4" onSubmit={verifySecret}>
-              <div>
-                <label className="input-label" htmlFor="admin-secret">Admin Secret Key</label>
-                <input
-                  id="admin-secret"
-                  className="input-field"
-                  type="password"
-                  placeholder="Enter admin secret"
-                  value={adminSecret}
-                  onChange={(e) => setAdminSecret(e.target.value)}
-                  required
-                  autoFocus
-                />
-              </div>
-              <button type="submit" className="btn btn-primary w-full btn-lg">
-                Access Admin Panel
-              </button>
-            </form>
-
-            <p className="mt-4 text-center text-xs text-slate">
-              <Link href="/dashboard" className="font-semibold text-primary hover:text-primary-hover transition-colors">
-                ← Back to Dashboard
-              </Link>
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
+  // Loading state
   if (authLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center gradient-hero-subtle">
         <div className="text-center">
           <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          <p className="mt-3 text-sm text-slate">Loading admin panel...</p>
+          <p className="mt-3 text-sm text-slate">Verifying access...</p>
         </div>
       </div>
     );
   }
+
+  // Not admin — handled by redirect in useEffect, show nothing
+  if (!isAdmin) return null;
 
   return (
     <div className="min-h-screen gradient-hero-subtle">
@@ -250,13 +196,14 @@ export default function AdminPage() {
             <span className="badge bg-amber-soft text-amber ml-2">Admin</span>
           </Link>
           <div className="flex items-center gap-3">
+            <span className="hidden text-sm text-slate sm:block">{adminName}</span>
             <Link href="/dashboard" className="btn btn-ghost text-xs">Dashboard</Link>
-            <button onClick={() => { setSecretVerified(false); setAdminSecret(""); }} className="btn btn-ghost text-xs text-danger">Lock Panel</button>
+            <button onClick={handleLogout} className="btn btn-ghost text-xs text-danger">Log out</button>
           </div>
         </div>
       </nav>
 
-      {/* Toast Notification */}
+      {/* Toast */}
       {toast && (
         <div className={`toast ${toastType === "success" ? "bg-impact text-white" : "bg-danger text-white"}`}>
           {toast}
@@ -296,16 +243,15 @@ export default function AdminPage() {
                   <div>
                     <label className="input-label">Draw Mode</label>
                     <select className="input-field" value={mode} onChange={(e) => setMode(e.target.value as "random" | "weighted")}>
-                      <option value="random">Random — standard lottery-style generation</option>
-                      <option value="weighted">Weighted — biased by most frequent user scores</option>
+                      <option value="random">Random — standard lottery-style</option>
+                      <option value="weighted">Weighted — biased by user score frequency</option>
                     </select>
                   </div>
                   <div className="flex gap-2">
                     <button className="btn btn-secondary flex-1" type="submit" disabled={loading}>
                       {loading ? "Running..." : "🔮 Simulate"}
                     </button>
-                    <button className="btn btn-primary flex-1" type="button" disabled={loading}
-                      onClick={() => publishDraw()}>
+                    <button className="btn btn-primary flex-1" type="button" disabled={loading} onClick={publishDraw}>
                       {loading ? "Publishing..." : "🚀 Publish Draw"}
                     </button>
                   </div>
@@ -318,13 +264,10 @@ export default function AdminPage() {
                   <div className="mt-4 space-y-3">
                     <div className="rounded-xl bg-cloud p-4">
                       <p className="text-xs font-semibold uppercase tracking-wider text-slate">Generated Numbers</p>
-                      <div className="flex gap-2 mt-2">
-                        {(simResult.draw as Record<string, unknown>)?.generated_numbers
-                          ? (((simResult.draw as Record<string, unknown>).generated_numbers as number[]) || []).map((n: number, i: number) => (
-                            <div key={i} className="number-orb">{n}</div>
-                          ))
-                          : <p className="text-sm text-slate">Numbers will appear after simulation</p>
-                        }
+                      <div className="flex gap-2 mt-2 flex-wrap">
+                        {((simResult.draw as Record<string, unknown>)?.generated_numbers as number[] | undefined)?.map((n, i) => (
+                          <div key={i} className="number-orb">{n}</div>
+                        )) ?? <p className="text-sm text-slate">Numbers will appear after simulation</p>}
                       </div>
                     </div>
                     <div className="rounded-xl bg-cloud p-4">
@@ -345,7 +288,6 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {/* Prize Pool Info */}
             <div className="surface-card p-6">
               <h2 className="section-title text-lg font-bold mb-4">Prize Pool Distribution</h2>
               <div className="grid gap-4 sm:grid-cols-3">
@@ -379,7 +321,7 @@ export default function AdminPage() {
                   <input type="checkbox" checked={charityFeatured} onChange={(e) => setCharityFeatured(e.target.checked)} className="h-4 w-4 rounded border-mist text-primary" />
                   <span className="text-sm font-medium">Featured charity (shown on homepage)</span>
                 </label>
-                <button className="btn btn-impact w-full" disabled={loading} onClick={() => createCharity()}>
+                <button className="btn btn-impact w-full" disabled={loading} onClick={createCharity}>
                   {loading ? "Creating..." : "Create Charity"}
                 </button>
               </div>
@@ -387,9 +329,9 @@ export default function AdminPage() {
 
             <div className="surface-card p-6">
               <h2 className="section-title text-lg font-bold">Charity Directory</h2>
-              <p className="mt-1 text-sm text-slate">View and manage existing charities.</p>
+              <p className="mt-1 text-sm text-slate">View all active charities available to subscribers.</p>
               <div className="mt-4">
-                <Link href="/charities" className="btn btn-secondary w-full text-center">
+                <Link href="/charities" className="btn btn-secondary w-full text-center" target="_blank">
                   View Public Directory →
                 </Link>
               </div>
@@ -409,11 +351,10 @@ export default function AdminPage() {
                   <h2 className="section-title text-lg font-bold">Winner Verification & Payouts</h2>
                   <p className="mt-1 text-sm text-slate">Review winner proof submissions and manage payout status.</p>
                 </div>
-                <button className="btn btn-primary text-xs" disabled={loading} onClick={() => fetchWinners()}>
+                <button className="btn btn-primary text-xs" disabled={loading} onClick={fetchWinners}>
                   {loading ? "Loading..." : "Refresh Winners"}
                 </button>
               </div>
-
               {winners.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
                   <div className="text-4xl mb-3">🏆</div>
@@ -436,15 +377,8 @@ export default function AdminPage() {
                         {w.proof_url && <a className="text-xs font-semibold text-primary hover:underline" href={w.proof_url} target="_blank" rel="noreferrer">View proof →</a>}
                       </div>
                       <div className="flex gap-1">
-                        {w.status === "pending" && (
-                          <>
-                            <button className="btn btn-ghost text-xs text-impact" onClick={() => updateWinnerStatus(w.id, "approved")}>Approve</button>
-                            <button className="btn btn-ghost text-xs text-danger" onClick={() => updateWinnerStatus(w.id, "rejected")}>Reject</button>
-                          </>
-                        )}
-                        {w.status === "approved" && (
-                          <button className="btn btn-ghost text-xs text-primary" onClick={() => updateWinnerStatus(w.id, "paid")}>Mark Paid</button>
-                        )}
+                        {w.status === "pending" && (<><button className="btn btn-ghost text-xs text-impact" onClick={() => updateWinnerStatus(w.id, "approved")}>Approve</button><button className="btn btn-ghost text-xs text-danger" onClick={() => updateWinnerStatus(w.id, "rejected")}>Reject</button></>)}
+                        {w.status === "approved" && (<button className="btn btn-ghost text-xs text-primary" onClick={() => updateWinnerStatus(w.id, "paid")}>Mark Paid</button>)}
                       </div>
                     </div>
                   ))}
@@ -462,11 +396,10 @@ export default function AdminPage() {
                 <h2 className="section-title text-lg font-bold">Platform Reports</h2>
                 <p className="text-sm text-slate">Comprehensive overview of platform statistics and metrics.</p>
               </div>
-              <button className="btn btn-primary" disabled={loading} onClick={() => fetchReports()}>
+              <button className="btn btn-primary" disabled={loading} onClick={fetchReports}>
                 {loading ? "Loading..." : "📊 Load Reports"}
               </button>
             </div>
-
             {report ? (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {[
