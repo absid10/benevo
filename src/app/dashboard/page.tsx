@@ -18,6 +18,35 @@ type Summary = {
 
 function fmt(d: string) { return new Date(`${d}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }); }
 
+function DashboardOverview() {
+  return (
+    <section className="mb-8 rounded-2xl bg-gradient-to-r from-primary/10 via-impact/5 to-amber/10 border border-primary/20 p-8">
+      <div className="max-w-4xl">
+        <h2 className="text-2xl font-bold text-ink mb-2">Welcome to Your Golf Performance Hub</h2>
+        <p className="text-slate mb-4">Track your Stableford scores, participate in monthly prize draws, and support charities you care about. Every score you enter automatically enters you into our monthly draw with chances to win from the shared prize pool.</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+          <div className="bg-white/60 backdrop-blur rounded-lg p-4 border border-primary/20">
+            <p className="text-xs font-semibold text-slate uppercase tracking-wide">Your Role</p>
+            <p className="text-lg font-bold text-primary mt-1">Golfer</p>
+          </div>
+          <div className="bg-white/60 backdrop-blur rounded-lg p-4 border border-impact/20">
+            <p className="text-xs font-semibold text-slate uppercase tracking-wide">How to Use</p>
+            <p className="text-sm font-medium text-ink mt-1">Enter scores → Get entered in draws → Win prizes</p>
+          </div>
+          <div className="bg-white/60 backdrop-blur rounded-lg p-4 border border-amber/20">
+            <p className="text-xs font-semibold text-slate uppercase tracking-wide">Charity Impact</p>
+            <p className="text-sm font-medium text-ink mt-1">10%+ of subscription goes to your chosen charity</p>
+          </div>
+          <div className="bg-white/60 backdrop-blur rounded-lg p-4 border border-slate/20">
+            <p className="text-xs font-semibold text-slate uppercase tracking-wide">Prize Draws</p>
+            <p className="text-sm font-medium text-ink mt-1">Monthly with 3, 4, or 5-number matches</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const [userId, setUserId] = useState("");
@@ -202,6 +231,36 @@ export default function DashboardPage() {
           </h1>
           <p className="mt-1 text-sm text-slate">Track your scores, manage your charity, and view your winnings.</p>
         </header>
+
+        {/* Overview Section */}
+        <section className="mb-8 rounded-2xl bg-gradient-to-r from-primary/10 via-impact/5 to-amber/10 border border-primary/20 p-6 md:p-8 fade-up">
+          <div className="max-w-4xl">
+            <h2 className="text-lg font-bold text-ink mb-2">How the Platform Works</h2>
+            <p className="text-sm text-slate mb-4">This is your personal hub for golf performance tracking and monthly prize draws. Here's what you can do:</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mt-5">
+              <div className="bg-white/60 backdrop-blur rounded-lg p-3 border border-primary/20">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mb-2"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path></svg>
+                <p className="text-xs font-semibold text-slate uppercase tracking-wide mb-1">Score Entry</p>
+                <p className="text-xs text-slate">Enter your Stableford scores. Keep your top 5 most recent.</p>
+              </div>
+              <div className="bg-white/60 backdrop-blur rounded-lg p-3 border border-amber/20">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mb-2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"></path></svg>
+                <p className="text-xs font-semibold text-slate uppercase tracking-wide mb-1">Monthly Draws</p>
+                <p className="text-xs text-slate">Auto-entered with 3, 4, or 5-number match chances.</p>
+              </div>
+              <div className="bg-white/60 backdrop-blur rounded-lg p-3 border border-impact/20">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--impact)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mb-2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"></path></svg>
+                <p className="text-xs font-semibold text-slate uppercase tracking-wide mb-1">Charity Support</p>
+                <p className="text-xs text-slate">10%+ of your subscription funds your chosen charity.</p>
+              </div>
+              <div className="bg-white/60 backdrop-blur rounded-lg p-3 border border-slate/20">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--slate)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mb-2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <p className="text-xs font-semibold text-slate uppercase tracking-wide mb-1">Win Prizes</p>
+                <p className="text-xs text-slate">Verify your wins and track pending payouts below.</p>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* Stats Row */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">

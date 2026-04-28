@@ -325,10 +325,13 @@ function CTASection() {
               Join Benevo today. Track your performance, compete in monthly draws, and create lasting impact for the charities you care about.
             </p>
             <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-              <Link href="/signup" className="btn btn-lg bg-white text-primary font-bold hover:bg-white/90 w-full sm:w-auto" id="cta-bottom">
+              <Link href="/signup" className="btn btn-primary btn-lg w-full sm:w-auto font-bold shadow-lg hover:shadow-xl transition-all" id="cta-bottom">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
                 Get started for free
               </Link>
-              <Link href="/#how-it-works" className="btn btn-lg border border-white/30 text-white hover:bg-white/10 w-full sm:w-auto">
+              <Link href="/#how-it-works" className="btn btn-lg border-2 border-white text-white hover:bg-white/20 w-full sm:w-auto font-medium">
                 Learn more
               </Link>
             </div>

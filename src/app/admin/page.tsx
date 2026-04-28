@@ -218,6 +218,36 @@ export default function AdminPage() {
           <p className="mt-1 text-sm text-slate">Manage draws, charities, winners, and view platform reports.</p>
         </header>
 
+        {/* Overview Section */}
+        <section className="mb-8 rounded-2xl bg-gradient-to-r from-amber/10 via-primary/5 to-impact/10 border border-amber/20 p-6 md:p-8 fade-up">
+          <div className="max-w-4xl">
+            <h2 className="text-lg font-bold text-ink mb-2">Admin Dashboard Overview</h2>
+            <p className="text-sm text-slate mb-4">You have complete control over the Benevo platform. Manage the monthly draws, charity listings, verify winners, and monitor platform metrics.</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mt-5">
+              <div className="bg-white/60 backdrop-blur rounded-lg p-3 border border-primary/20">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mb-2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"></path></svg>
+                <p className="text-xs font-semibold text-slate uppercase tracking-wide mb-1">Manage Draws</p>
+                <p className="text-xs text-slate">Simulate and publish monthly prize draws with random or weighted logic.</p>
+              </div>
+              <div className="bg-white/60 backdrop-blur rounded-lg p-3 border border-amber/20">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mb-2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"></path></svg>
+                <p className="text-xs font-semibold text-slate uppercase tracking-wide mb-1">Charities</p>
+                <p className="text-xs text-slate">Add, edit, delete charities and manage featured listings.</p>
+              </div>
+              <div className="bg-white/60 backdrop-blur rounded-lg p-3 border border-impact/20">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--impact)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mb-2"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"></path></svg>
+                <p className="text-xs font-semibold text-slate uppercase tracking-wide mb-1">Verify Winners</p>
+                <p className="text-xs text-slate">Review winner submissions and mark payouts as completed.</p>
+              </div>
+              <div className="bg-white/60 backdrop-blur rounded-lg p-3 border border-slate/20">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--slate)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mb-2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <p className="text-xs font-semibold text-slate uppercase tracking-wide mb-1">View Reports</p>
+                <p className="text-xs text-slate">Monitor total users, prize pools, and charitable impact.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Tabs */}
         <div className="flex gap-1 mb-6 rounded-xl bg-cloud p-1 w-fit overflow-x-auto">
           {tabs.map((t) => (
