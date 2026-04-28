@@ -1,163 +1,99 @@
-# Benevo — Where Performance Meets Purpose
+# Benevo - Where Performance Meets Purpose
 
-A modern web platform that combines golf score tracking with charitable impact and monthly prize draws. Built with Next.js, Supabase, and Stripe.
+A full-stack web application that combines competitive golf scoring with charitable giving. Users enter their golf scores monthly, participate in draws, and automatically support their chosen charities.
 
-## Overview
+## 🎯 Live Demo
 
-Benevo lets golfers turn their game into a force for good. Subscribers enter their Stableford scores, which automatically become entries into monthly prize draws. A portion of every subscription goes directly to a charity of the user's choice.
+- **Website:** https://benevo-bice.vercel.app/
+- **User Dashboard:** https://benevo-bice.vercel.app/dashboard
+- **Admin Panel:** https://benevo-bice.vercel.app/admin
 
-**Key features:**
-- Rolling 5-score tracker with Stableford format (1–45)
-- Monthly prize draws (random or weighted by player scores)
-- Charity directory with user-controlled contribution percentages
-- Admin panel for draw management, charity curation, and winner verification
-- Stripe-powered subscription billing with webhook lifecycle sync
+## ✨ Key Features
 
-## Tech Stack
+- ✅ **Golf Score Tracking** - Monthly score entry and history management
+- ✅ **Monthly Draws** - Automatic participation with random winner selection
+- ✅ **Charity Support** - Select charities and set contribution percentages
+- ✅ **User Authentication** - Email/password signup & Google OAuth login
+- ✅ **Dashboard** - Personal stats, winnings, and charity contributions
+- ✅ **Billing Integration** - Stripe subscriptions (monthly/yearly)
+- ✅ **Admin Panel** - Manage draws, charities, and verify winners
+
+## 🛠️ Technology Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | Next.js 16 (App Router), React 19, TypeScript |
-| Styling | Tailwind CSS 4 |
-| Backend | Next.js API Routes (serverless) |
-| Database | Supabase (PostgreSQL) with Row Level Security |
-| Payments | Stripe (Checkout, Webhooks, Billing Portal) |
-| Deployment | Vercel |
+| **Frontend** | Next.js 16, React 19, TypeScript 5.9, Tailwind CSS |
+| **Backend** | Next.js API Routes, Node.js |
+| **Database** | Supabase (PostgreSQL) with RLS |
+| **Authentication** | Supabase Auth (JWT-based) |
+| **Payments** | Stripe API |
+| **Deployment** | Vercel |
 
-## Project Structure
+## 📁 Project Structure
 
 ```
 src/
 ├── app/
-│   ├── page.tsx              # Landing page
-│   ├── login/page.tsx        # Login
-│   ├── signup/page.tsx       # Signup
-│   ├── dashboard/page.tsx    # Subscriber dashboard
-│   ├── admin/page.tsx        # Admin panel
-│   ├── charities/page.tsx    # Charity directory
-│   ├── components/           # Navbar, Footer
-│   └── api/
-│       ├── auth/             # Authentication
-│       ├── scores/           # Score CRUD (rolling 5)
-│       ├── draw/             # Simulate & publish draws
-│       ├── charities/        # Charity CRUD
-│       ├── charity-preference/ # User charity selection
-│       ├── subscriptions/    # Subscription management
-│       ├── billing/          # Stripe checkout/portal/webhook
-│       ├── winners/          # Winner verification
-│       ├── dashboard/        # Dashboard summary
-│       └── admin/            # Reports & analytics
-├── lib/
-│   ├── draw.ts               # Draw engine (random + weighted)
-│   ├── schemas.ts            # Zod validation schemas
-│   ├── stripe.ts             # Stripe client
-│   ├── supabase.ts           # Admin Supabase client
-│   ├── env.ts                # Environment validation
-│   └── format.ts             # Currency formatting
-├── utils/supabase/           # Supabase SSR clients
-│   ├── client.ts             # Browser client
-│   ├── server.ts             # Server client
-│   └── middleware.ts         # Middleware client
-├── middleware.ts              # Auth session refresh
+│   ├── page.tsx                 # Homepage
+│   ├── login/page.tsx           # Login
+│   ├── signup/page.tsx          # Signup
+│   ├── charities/page.tsx       # Charities directory
+│   ├── dashboard/page.tsx       # User dashboard
+│   ├── admin/page.tsx           # Admin panel
+│   ├── components/              # Reusable UI components
+│   ├── api/                     # 13 API endpoints
+│   └── globals.css              # Design system & styles
+├── lib/                         # Utilities (draw, schemas, stripe)
+├── utils/supabase/              # Supabase client setup
+└── middleware.ts                # Auth middleware
 supabase/
 └── migrations/
-    └── 001_initial_schema.sql # Full database schema with RLS
+    └── 001_initial_schema.sql   # Database schema
 ```
 
-## Getting Started
+## 🚀 Getting Started
 
 ### Prerequisites
+- Node.js 18.x or higher
+- npm or yarn
+- Supabase account
+- Stripe account (for payments)
 
-- Node.js 18+
-- A Supabase project
-- A Stripe account (optional for local dev)
+### Installation
 
-### 1. Install dependencies
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/absid10/benevo.git
+   cd benevo-app
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Set up environment variables**
+   ```bash
+   cp .env.example .env.local
+   ```
+   
+   Fill in the variables:
+   - Supabase URL and Keys
+   - Stripe Publishable and Secret Keys
+   - Admin Secret for access control
+
+4. **Run development server**
+   ```bash
+   npm run dev
+   ```
+   
+   Open [http://localhost:3000](http://localhost:3000)
+
+## 📝 Available Commands
 
 ```bash
-git clone https://github.com/absid10/Benevo-Where-performance-meets-purpose.git
-cd benevo-app
-npm install
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run lint         # Run ESLint
+npm run type-check   # Check TypeScript types
 ```
-
-### 2. Set up the database
-
-1. Open your Supabase project → **SQL Editor**
-2. Paste the contents of `supabase/migrations/001_initial_schema.sql`
-3. Click **Run** — this creates all tables, indexes, and RLS policies
-
-### 3. Configure environment
-
-Copy `.env.example` to `.env.local` and fill in your keys:
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-ADMIN_API_SECRET=your-admin-secret
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-```
-
-### 4. Run the dev server
-
-```bash
-npm run dev
-```
-
-Visit [http://localhost:3000](http://localhost:3000)
-
-## Pages
-
-| Page | URL | Access |
-|------|-----|--------|
-| Homepage | `/` | Public |
-| Login | `/login` | Public |
-| Signup | `/signup` | Public |
-| Charities | `/charities` | Public |
-| Dashboard | `/dashboard` | Subscriber |
-| Admin Panel | `/admin` | Admin |
-
-## Database Schema
-
-The schema includes 11 tables with Row Level Security:
-
-- **profiles** — User identity and role (subscriber / admin)
-- **charities** — Charity directory with featured flag
-- **subscriptions** — Stripe-synced payment lifecycle
-- **user_charity_preferences** — Per-user charity selection and contribution %
-- **scores** — Golf scores (rolling 5, Stableford 1–45)
-- **draws** — Monthly draw configuration and mode
-- **draw_entries** — User entries per draw (built from scores)
-- **prize_pools** — Pool calculations and tier distribution
-- **winners** — Winner records with verification workflow
-- **donations** — Independent donation records
-- **notifications** — System notifications
-
-## Draw System
-
-The draw engine supports two modes:
-
-- **Random**: Standard lottery-style number generation (1–45 range)
-- **Weighted**: Numbers biased by the most frequently occurring user scores
-
-Prize pool distribution:
-| Tier | Pool Share | Rollover |
-|------|-----------|----------|
-| 5-Number Match | 40% | Yes (Jackpot) |
-| 4-Number Match | 35% | No |
-| 3-Number Match | 25% | No |
-
-Multiple winners in the same tier split the pool equally. The 5-match jackpot carries forward if unclaimed.
-
-## Deployment
-
-1. Push the repo to GitHub
-2. Import into Vercel — set root directory to `benevo-app`
-3. Add all environment variables from `.env.example`
-4. Deploy
-
-Make sure to run the migration SQL in your Supabase project before deploying.
-
-## License
-
-MIT
